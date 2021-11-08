@@ -693,7 +693,7 @@ export const transmux_stereo = (aac: Buffer): [Buffer, Buffer | null] => {
       bytes.push(byte);
     }
 
-    const channel_configuration = 1;
+    const channel_configuration = 2;
     const protection = false;
     const frame_length = 7 + bytes.length;
     const frames = 0;
