@@ -8,7 +8,7 @@ import {
  } from 'arib-mpeg2ts-parser';
 import { Writable }  from 'stream';
 
-import { transmux } from './aac'
+import { transmux_mono, transmux_stereo } from './aac'
 
 import fs from 'fs';
 const sub = fs.createWriteStream('sub.adts');
@@ -87,7 +87,7 @@ class TSPESExtractor extends Writable {
 
           const PES_header_data_length = AAC[TSPES.PES_HEADER_SIZE + 2];
           const begin = TSPES.PES_HEADER_SIZE + 3 + PES_header_data_length;
-          const result = transmux(AAC.slice(begin));
+          const result = transmux_mono(AAC.slice(begin));
 
           if (result[1] !== null) {
             sub.write(result[1]);

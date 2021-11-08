@@ -498,7 +498,7 @@ const ID_PCE = 0x05;
 const ID_FIL = 0x06;
 const ID_END = 0x07;
 
-export const transmux = (aac: Buffer): [Buffer, Buffer | null] => {
+export const transmux_mono = (aac: Buffer): [Buffer, Buffer | null] => {
   // parse ADTS header
   const {
     syncword,
@@ -539,6 +539,125 @@ export const transmux = (aac: Buffer): [Buffer, Buffer | null] => {
         stream.consumeClear();
         idx += 1;
         break;
+      case ID_PCE:
+        program_config_element(stream);
+        stream.consumeClear();
+        break;
+      case ID_FIL:
+        fill_element(stream);
+        stream.consumeClear();
+        break;
+      case ID_END:
+        bits[0].push(... stream.consumeArray());
+        bits[1].push(... stream.consumeArray());
+        stream.consumeClear();
+        break;
+      default:
+        stream.consumeClear();
+        break;
+    }
+    if (id_syn_ele === ID_END) { break; }
+  }
+
+  // bytealign
+  const result: [Buffer, Buffer] = [Buffer.from([]), Buffer.from([])];
+  for (let i = 0; i < bits.length; i++) {
+    while ((bits[i].length % 8) !== 0) { bits[i].push(0); }
+
+    const bytes = [];
+    for (let b = 0; b < bits[i].length; b += 8) {
+      let byte = 0;
+      for (let x = 0; x < 8; x++) {
+        byte <<= 1;
+        byte |= bits[i][b + x];
+      }
+      bytes.push(byte);
+    }
+
+    const channel_configuration = 1;
+    const protection = false;
+    const frame_length = 7 + bytes.length;
+    const frames = 0;
+
+    const ADTS_header = generateADTSHeader({
+      syncword,
+      mpeg_version,
+      layer,
+      protection,
+      profile,
+      frequency_index,
+      private_bit,
+      channel_configuration,
+      originality,
+      home,
+      copyrighted,
+      copyright,
+      frame_length,
+      buffer_fullness,
+      frames,
+    });
+
+    result[i] = Buffer.concat([
+      ADTS_header,
+      Buffer.from(bytes),
+    ]);
+  }
+
+  return result;
+};
+
+export const transmux_stereo = (aac: Buffer): [Buffer, Buffer | null] => {
+  // parse ADTS header
+  const {
+    syncword,
+    mpeg_version,
+    layer,
+    protection,
+    profile,
+    frequency_index,
+    private_bit,
+    channel_configuration,
+    originality,
+    home,
+    copyrighted,
+    copyright,
+    frame_length,
+    buffer_fullness,
+    frames,
+  } = parseADTSHeader(aac, 0);
+
+  if (channel_configuration !== 0) {
+    return [aac, null];
+  }
+
+  const begin = (protection ? 9 : 7) + 2 * frames;
+  const end = Math.min(aac.length, frame_length + 2 * frames);
+
+  const bits: [number[], number[]] = [[], []];
+  let idx = 0;
+
+  const stream = new BitStream(aac.slice(begin, end));
+  while (!stream.isEmpty()) {
+    const id_syn_ele = stream.readBits(3);
+    //console.log(stream.remains(), '/',  aac.length, frame_length, '=>', id_syn_ele)
+    switch (id_syn_ele) {
+      case ID_SCE: {
+        stream.consumeClear();
+        single_channel_element(stream);
+        const element = stream.consumeArray();
+        const tag = element.slice(0, 4);
+        const elem = element.slice(4);
+
+        bits[idx].push(0, 0, 1) // CPE
+        bits[idx].push(... tag); // element_instance_tag
+        bits[idx].push(0); // common_window = 0
+        bits[idx].push(... elem); // L
+        bits[idx].push(... elem); // R
+
+        stream.consumeClear();
+        idx += 1;
+        break;
+      }
       case ID_PCE:
         program_config_element(stream);
         stream.consumeClear();
