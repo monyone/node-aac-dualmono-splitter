@@ -1,5 +1,5 @@
 {
-  "name": "aac-dualmono-splitter",
+  "name": "@monyone/aac-dualmono-splitter",
   "version": "0.0.1",
   "main": "dist/index.js",
   "bin": {
@@ -46,6 +46,5 @@
   "dependencies": {
     "arib-mpeg2ts-parser": "^3.0.11",
     "commander": "^7.1.0"
-  },
-  "private": true
+  }
 }
