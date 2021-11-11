@@ -7,6 +7,8 @@ import http from 'http';
 import https from 'https'
 import { PassThrough } from 'stream';
 
+import DualmonoSplitTransform from './index';
+
 import { Command } from 'commander';
 const program = new Command();
 
@@ -26,11 +28,9 @@ const options = program.opts();
 const src = new PassThrough(); 
 const dst = options.output == null || options.output === '-' ? process.stdout : fs.createWriteStream(options.output);
 
-/*
 src
-  .pipe(new MetadataTransform())
+  .pipe(new DualmonoSplitTransform())
   .pipe(dst);
-*/
 
 if (options.https) {
   https.get(options.https, (res => { res.pipe(src); }));
