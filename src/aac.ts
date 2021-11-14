@@ -221,7 +221,7 @@ const gain_control_data = (window_sequence: number, stream: BitStream): void => 
     }
   } else if (window_sequence === LONG_STOP_SEQUENCE) {
     for (let bd = 0; bd <= max_band; bd++) {
-      for (let wd = 0; wd < 1; wd++) {
+      for (let wd = 0; wd < 2; wd++) {
         const adjust_num = stream.readBits(3);
         for (let ad = 0; ad < adjust_num; ad++) {
           const alevcode = stream.readBits(4);
