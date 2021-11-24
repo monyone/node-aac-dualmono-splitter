@@ -53,7 +53,7 @@ const ics_info = (stream: BitStream): ics_info => {
     if (predictor_data_present) {
       const predictor_reset = stream.readBool();
       if (predictor_reset) {
-        const predictor_reset_group_number = stream.readBits(6);
+        const predictor_reset_group_number = stream.readBits(5);
       }
       for (let sfb = 0; sfb < Math.min(max_sfb, PRED_SFB_MAX); sfb++) {
         const prediction_used = stream.readBool();
